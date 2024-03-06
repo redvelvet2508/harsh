@@ -1,0 +1,98 @@
+import { useEffect, useState } from "react";
+import { db } from './firebase-config'
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "@firebase/firestore";
+import "./index.css";
+
+function App() {
+  const [products, setProducts] = useState([]);
+  const [productName, setProductName] = useState("");
+  const [productPrice, setProductPrice] = useState(0);
+  const [productSize, setProductSize] = useState("");
+
+  const ProductsCollectionRef = collection(db, "products");
+
+  useEffect(() => {
+    const getProductsData = async () => {
+      const data = await getDocs(ProductsCollectionRef);
+      setProducts(data.docs.map((elem) => ({ ...elem.data(), id: elem.id })));
+    }
+
+    getProductsData();
+  }, [ProductsCollectionRef]);
+
+  
+
+  
+  
+
+
+  const uploadProduct = async () => {
+   
+    await addDoc(ProductsCollectionRef, {  name: productName, price: productPrice, size: productSize });
+    setProductName("");
+    setProductPrice(0);
+    setProductSize("");
+  }
+
+  const deleteProduct = async (id) => {
+    const productDoc = doc(db, "products", id);
+    await deleteDoc(productDoc);
+  }
+
+  const updateSize = async (id, size) => {
+    const updatedSize = prompt("Enter the new size:", size) || size;
+    const productDoc = doc(db, "products", id);
+    const newSize = { size: updatedSize.toUpperCase() };
+    await updateDoc(productDoc, newSize);
+  }
+
+  return (
+    <section className="Clothes">
+      <div className="newa">
+        <h1 style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', color: '#5a1aa8' }}>Clothes Collection</h1>
+
+        {/* Upload Product Form */}
+        <h2 style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', color: '#6a0b68' }}>Upload Product</h2>
+        <form onSubmit={(e) => { e.preventDefault(); uploadProduct(); }}>
+          <label htmlFor="productName">Product Name:</label>
+          <input type="text" id="productName" name="productName" value={productName} onChange={(e) => setProductName(e.target.value)} required />
+          <label htmlFor="productPrice">Price:</label>
+          <input type="number" id="productPrice" name="productPrice" value={productPrice} onChange={(e) => setProductPrice(Number(e.target.value))} required />
+          <label htmlFor="productSize">Size:</label>
+          <input type="text" id="productSize" name="productSize" value={productSize} onChange={(e) => setProductSize(e.target.value)} required />
+          <button type="submit">Upload</button>
+        </form>
+
+        {/* Display Products */}
+        <h2 style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', color: '#6a0b68', marginTop: '20px' }}>Products</h2>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Arial, sans-serif' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#279f25' }}>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>ID</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Product Name</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Price</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Size</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id}>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{product.id}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{product.name}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{product.price}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{product.size}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  <button onClick={() => updateSize(product.id, product.size)}>Update Size</button>
+                  <button onClick={() => deleteProduct(product.id)}>Delete Product</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default App;
